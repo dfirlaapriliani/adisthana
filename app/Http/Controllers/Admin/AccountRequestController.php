@@ -10,11 +10,11 @@ class AccountRequestController extends Controller
 {
     public function index()
     {
-        $requests = AccountRequest::orderBy('created_at', 'desc')->get();
+        $requests = AccountRequest::orderBy('created_at', 'desc')->paginate(10);
         return view('admin.account-requests.index', compact('requests'));
     }
 
-    public function setujui($id)
+    public function approve($id)
     {
         $request = AccountRequest::findOrFail($id);
         $request->update(['status' => 'approved']);
@@ -27,7 +27,7 @@ class AccountRequestController extends Controller
         ]);
     }
 
-    public function tolak($id)
+    public function reject($id)
     {
         $request = AccountRequest::findOrFail($id);
         $request->update(['status' => 'rejected']);
