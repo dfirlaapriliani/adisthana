@@ -16,7 +16,9 @@ class Book extends Model
         'penerbit',
         'stok',
         'deskripsi',
+        'foto',
         'status',
+        'kategori_id',  // ← PASTIKAN INI ADA
     ];
 
     protected $casts = [
@@ -32,5 +34,15 @@ class Book extends Model
     public function isAvailable()
     {
         return $this->status === 'available' && $this->stok > 0;
+    }
+
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'available')->where('stok', '>', 0);
+    }
+
+    public function kategori()
+    {
+        return $this->belongsTo(Kategori::class);
     }
 }

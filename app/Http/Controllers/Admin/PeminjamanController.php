@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Booking;
-use App\Models\Book;
 use App\Models\UserNotification;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -14,16 +13,21 @@ class PeminjamanController extends Controller
     {
         $status = $request->status ?? 'pending';
         
-        $peminjaman = Booking::with(['user', 'book'])
-            ->when($status !== 'semua', fn($q) => $q->where('status', $status))
-            ->latest()
-            ->paginate(15);
+        $query = Booking::with(['user', 'book']);
+        
+        if ($status !== 'semua') {
+            $query->where('status', $status);
+        }
+        
+        $peminjaman = $query->latest()->paginate(15);
 
         $jumlah = [
+            'semua' => Booking::count(),
             'pending' => Booking::where('status', 'pending')->count(),
-            'disetujui' => Booking::where('status', 'approved')->count(),
-            'dipinjam' => Booking::where('status', 'borrowed')->count(),
-            'dikembalikan' => Booking::where('status', 'returned')->count(),
+            'approved' => Booking::where('status', 'approved')->count(),
+            'borrowed' => Booking::where('status', 'borrowed')->count(),
+            'returned' => Booking::where('status', 'returned')->count(),
+            'rejected' => Booking::where('status', 'rejected')->count(),
         ];
 
         return view('admin.peminjaman.index', compact('peminjaman', 'status', 'jumlah'));
@@ -56,6 +60,7 @@ class PeminjamanController extends Controller
 
         $peminjaman->update(['status' => 'borrowed']);
 
+        // Notifikasi ke peminjam
         UserNotification::sendNotification(
             $peminjaman->user_id,
             'Peminjaman Disetujui',
@@ -80,6 +85,7 @@ class PeminjamanController extends Controller
             'catatan' => $request->catatan,
         ]);
 
+        // Notifikasi ke peminjam
         UserNotification::sendNotification(
             $peminjaman->user_id,
             'Peminjaman Ditolak',
@@ -117,6 +123,7 @@ class PeminjamanController extends Controller
             $user->save();
         }
 
+        // Notifikasi ke peminjam
         UserNotification::sendNotification(
             $peminjaman->user_id,
             'Buku Dikembalikan',

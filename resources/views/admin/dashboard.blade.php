@@ -86,16 +86,16 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-[#7B1518]/5">
-                    @forelse($peminjamanTerbaru ?? [] as $booking)
+                    @forelse($peminjamanTerbaru ?? [] as $item)
                     <tr class="hover:bg-[#F0EBE3]/30 transition">
                         <td class="px-6 py-4">
-                            <p class="text-sm font-medium text-[#2C1810]">{{ $booking->user->name ?? '-' }}</p>
-                            <p class="text-xs text-[#9a8a80]">{{ $booking->user->class_code ?? $booking->user->email ?? '-' }}</p>
+                            <p class="text-sm font-medium text-[#2C1810]">{{ $item->user->name ?? '-' }}</p>
+                            <p class="text-xs text-[#9a8a80]">{{ $item->user->class_code ?? $item->user->email ?? '-' }}</p>
                         </td>
-                        <td class="px-6 py-4 text-sm text-[#2C1810]">{{ $booking->book->judul ?? '-' }}</td>
+                        <td class="px-6 py-4 text-sm text-[#2C1810]">{{ $item->book->judul ?? '-' }}</td>
                         <td class="px-6 py-4 text-sm text-[#2C1810]">
-                            {{ $booking->tanggal_pinjam ? \Carbon\Carbon::parse($booking->tanggal_pinjam)->format('d M Y') : '-' }}
-                            <span class="block text-xs text-[#9a8a80]">s/d {{ $booking->tanggal_kembali ? \Carbon\Carbon::parse($booking->tanggal_kembali)->format('d M Y') : '-' }}</span>
+                            {{ $item->tanggal_pinjam ? \Carbon\Carbon::parse($item->tanggal_pinjam)->format('d M Y') : '-' }}
+                            <span class="block text-xs text-[#9a8a80]">s/d {{ $item->tanggal_kembali ? \Carbon\Carbon::parse($item->tanggal_kembali)->format('d M Y') : '-' }}</span>
                         </td>
                         <td class="px-6 py-4">
                             @php
@@ -107,18 +107,18 @@
                                     'rejected' => 'bg-red-100 text-red-700',
                                 ];
                             @endphp
-                            <span class="px-2 py-1 text-xs rounded-full {{ $statusColors[$booking->status] ?? 'bg-gray-100' }}">
-                                @if($booking->status == 'pending') Pending
-                                @elseif($booking->status == 'approved') Disetujui
-                                @elseif($booking->status == 'borrowed') Dipinjam
-                                @elseif($booking->status == 'returned') Dikembalikan
-                                @elseif($booking->status == 'rejected') Ditolak
-                                @else {{ $booking->status }}
+                            <span class="px-2 py-1 text-xs rounded-full {{ $statusColors[$item->status] ?? 'bg-gray-100' }}">
+                                @if($item->status == 'pending') Pending
+                                @elseif($item->status == 'approved') Disetujui
+                                @elseif($item->status == 'borrowed') Dipinjam
+                                @elseif($item->status == 'returned') Dikembalikan
+                                @elseif($item->status == 'rejected') Ditolak
+                                @else {{ $item->status }}
                                 @endif
                             </span>
                         </td>
                         <td class="px-6 py-4 text-right">
-                            <a href="{{ route('admin.bookings.show', $booking) }}" class="text-[#7B1518] hover:text-[#5a0f12] text-sm">Detail →</a>
+                            <a href="{{ route('admin.peminjaman.show', $item) }}" class="text-[#7B1518] hover:text-[#5a0f12] text-sm">Detail →</a>
                         </td>
                     </tr>
                     @empty

@@ -9,9 +9,29 @@ use Illuminate\Support\Facades\Storage;
 
 class BukuController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $buku = Book::orderBy('judul')->paginate(10);
+        $query = Book::with('kategori');
+        
+        if ($request->has('cari') && $request->cari != '') {
+            $cari = $request->cari;
+            $query->where(function($q) use ($cari) {
+                $q->where('judul', 'like', "%{$cari}%")
+                ->orWhere('pengarang', 'like', "%{$cari}%")
+                ->orWhere('penerbit', 'like', "%{$cari}%");
+            });
+        }
+        
+        if ($request->has('kategori') && $request->kategori != '') {
+            $query->where('kategori_id', $request->kategori);
+        }
+        
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+        
+        $buku = $query->orderBy('judul')->paginate(100); // Ambil semua untuk DataTable client-side
+        
         return view('admin.buku.index', compact('buku'));
     }
 
@@ -30,13 +50,14 @@ class BukuController extends Controller
             'stok' => 'required|integer|min:1',
             'deskripsi' => 'nullable|string',
             'foto' => 'nullable|image|max:2048',
+            'kategori_id' => 'nullable|exists:kategori,id',  // ← TAMBAHKAN
         ]);
 
         if ($request->hasFile('foto')) {
             $validated['foto'] = $request->file('foto')->store('buku', 'public');
         }
 
-        $validated['status'] = $validated['stok'] > 0 ? 'available' : 'unavailable';
+        $validated['status'] = 'available';
 
         Book::create($validated);
 
@@ -64,10 +85,10 @@ class BukuController extends Controller
             'stok' => 'required|integer|min:0',
             'deskripsi' => 'nullable|string',
             'foto' => 'nullable|image|max:2048',
+            'kategori_id' => 'nullable|exists:kategori,id',  // ← TAMBAHKAN
         ]);
 
         if ($request->hasFile('foto')) {
-            // Hapus foto lama
             if ($buku->foto) {
                 Storage::disk('public')->delete($buku->foto);
             }
@@ -84,7 +105,6 @@ class BukuController extends Controller
 
     public function destroy(Book $buku)
     {
-        // Hapus foto
         if ($buku->foto) {
             Storage::disk('public')->delete($buku->foto);
         }

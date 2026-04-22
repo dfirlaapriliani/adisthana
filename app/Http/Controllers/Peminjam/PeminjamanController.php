@@ -10,17 +10,15 @@ use App\Http\Controllers\Controller;
 
 class PeminjamanController extends Controller
 {
-    public function __construct()
+    public function index(Request $request)
     {
-        $this->middleware('check.penalty')->except(['index', 'show']);
-    }
-
-    public function index()
-    {
-        $peminjaman = auth()->user()->bookings()
-            ->with('book')
-            ->latest()
-            ->paginate(10);
+        $query = auth()->user()->bookings()->with('book');
+        
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+        
+        $peminjaman = $query->latest()->paginate(10);
 
         return view('peminjam.peminjaman.index', compact('peminjaman'));
     }
@@ -80,13 +78,20 @@ class PeminjamanController extends Controller
 
     public function show(Booking $peminjaman)
     {
-        $this->authorize('view', $peminjaman);
+        // Cek kepemilikan
+        if ($peminjaman->user_id !== auth()->id()) {
+            abort(403, 'Anda tidak memiliki akses ke peminjaman ini.');
+        }
+        
         return view('peminjam.peminjaman.show', compact('peminjaman'));
     }
 
     public function batal(Booking $peminjaman)
     {
-        $this->authorize('update', $peminjaman);
+        // Cek kepemilikan
+        if ($peminjaman->user_id !== auth()->id()) {
+            abort(403, 'Anda tidak memiliki akses.');
+        }
         
         if (!in_array($peminjaman->status, ['pending', 'approved'])) {
             return back()->with('error', 'Peminjaman tidak dapat dibatalkan.');

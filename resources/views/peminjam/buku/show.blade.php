@@ -1,70 +1,85 @@
 <x-layout-peminjam>
     <x-slot name="title">{{ $buku->judul }}</x-slot>
-    
-    <div class="mb-6">
-        <a href="{{ route('peminjam.buku.index') }}" class="text-[#8a8a95] hover:text-white text-sm flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
+
+    {{-- Back --}}
+    <div class="px-4 py-3 flex items-center gap-2">
+        <a href="{{ route('peminjam.buku.index') }}" class="text-[#55555f] text-sm flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
-            Kembali ke daftar buku
+            Kembali
         </a>
     </div>
 
-    <div class="bg-[#111114] border border-white/[0.08] rounded-2xl overflow-hidden">
-        <div class="grid md:grid-cols-2 gap-6 p-6">
-            {{-- Foto --}}
-            <div class="aspect-[4/3] bg-gradient-to-br from-[#1a1a1f] to-[#0e0e10] rounded-xl flex items-center justify-center">
-                @if($buku->foto)
-                    <img src="{{ asset('storage/' . $buku->foto) }}" alt="{{ $buku->judul }}" class="w-full h-full object-cover rounded-xl">
-                @else
-                    <svg class="w-24 h-24 text-[#3d3d45]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+    {{-- Hero --}}
+    <div class="grid border-y border-white/[0.06]" style="grid-template-columns: 140px 1fr">
+        {{-- Cover - portrait 3:4 --}}
+        <div class="bg-[#13131a] relative overflow-hidden" style="aspect-ratio: 3/4">
+            @if($buku->foto)
+                <img src="{{ asset('storage/' . $buku->foto) }}" class="w-full h-full object-cover absolute inset-0">
+            @else
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <svg class="w-9 h-9 stroke-[#2e2e38]" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
                     </svg>
+                </div>
+            @endif
+            <span class="absolute top-2 left-2 bg-green-500/15 text-green-400 border border-green-400/25 text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                Tersedia
+            </span>
+        </div>
+
+        {{-- Info --}}
+        <div class="bg-[#0c0c0f] border-l border-white/[0.06] px-4 py-5 flex flex-col justify-between">
+            <div class="flex flex-col gap-1">
+                @if($buku->kategori)
+                    <span class="text-[10px] text-[#c9a44e] uppercase tracking-widest">{{ $buku->kategori->nama }}</span>
                 @endif
+                <h1 class="text-[17px] font-bold text-[#f0f0f0] leading-tight" style="font-family:'Georgia',serif">
+                    {{ $buku->judul }}
+                </h1>
+                <p class="text-[12px] text-[#c9a44e]">{{ $buku->pengarang }}</p>
             </div>
-            
-            {{-- Info --}}
-            <div>
-                <h1 class="text-2xl font-semibold text-white mb-2" style="font-family: 'Cormorant Garamond', serif;">{{ $buku->judul }}</h1>
-                <p class="text-[#d4af6a] text-lg mb-4">{{ $buku->pengarang }}</p>
-                
-                <div class="space-y-3 mb-6">
-                    <div class="flex items-center gap-3">
-                        <span class="text-[#5a5a65] w-28">Penerbit</span>
-                        <span class="text-white">{{ $buku->penerbit }}</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-[#5a5a65] w-28">Tahun Terbit</span>
-                        <span class="text-white">{{ $buku->tahun_terbit }}</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-[#5a5a65] w-28">Stok</span>
-                        <span class="text-white">{{ $buku->stok }} buku</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-[#5a5a65] w-28">Status</span>
-                        <span class="px-2 py-1 text-xs rounded-full bg-green-400/10 text-green-400">Tersedia</span>
-                    </div>
+            <div class="flex flex-col gap-1.5">
+                <div class="flex justify-between text-[11px] border-b border-white/[0.04] pb-1.5">
+                    <span class="text-[#40404a]">Penerbit</span>
+                    <span class="text-[#b0b0bc]">{{ $buku->penerbit }}</span>
                 </div>
-                
-                @if($buku->deskripsi)
-                <div class="mb-6">
-                    <p class="text-[#5a5a65] text-sm mb-2">Deskripsi</p>
-                    <p class="text-[#8a8a95] text-sm leading-relaxed">{{ $buku->deskripsi }}</p>
+                <div class="flex justify-between text-[11px] border-b border-white/[0.04] pb-1.5">
+                    <span class="text-[#40404a]">Tahun</span>
+                    <span class="text-[#b0b0bc]">{{ $buku->tahun_terbit }}</span>
                 </div>
-                @endif
-                
-                @if(!auth()->user()->hasActivePenalty())
-                <a href="{{ route('peminjam.peminjaman.create', ['buku_id' => $buku->id]) }}" 
-                    class="inline-block px-6 py-3 bg-[#d4af6a] text-[#0e0e10] rounded-xl font-medium hover:bg-[#c4a05a] transition">
+                <div class="flex justify-between text-[11px]">
+                    <span class="text-[#40404a]">Stok</span>
+                    <span class="text-[#b0b0bc]">{{ $buku->stok }} buku</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Deskripsi + Tombol --}}
+    <div class="px-4">
+        @if($buku->deskripsi)
+        <div class="py-4 border-b border-white/[0.06]">
+            <p class="text-[10px] text-[#3a3a44] uppercase tracking-widest mb-2">Deskripsi</p>
+            <p class="text-[13.5px] text-[#888896] leading-[1.75]">{{ $buku->deskripsi }}</p>
+        </div>
+        @endif
+
+        <div class="py-4">
+            @if(!auth()->user()->hasActivePenalty())
+                <a href="{{ route('peminjam.peminjaman.create', ['buku_id' => $buku->id]) }}"
+                   class="flex items-center justify-center gap-2 w-full py-3.5 bg-[#c9a44e] text-[#0a0a0c] rounded-[10px] text-sm font-bold tracking-wide">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
                     Ajukan Peminjaman
                 </a>
-                @else
-                <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                    <p class="text-red-400 text-sm">Anda sedang dalam masa penalti, tidak dapat mengajukan peminjaman.</p>
+            @else
+                <div class="py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-[10px] text-center text-red-400 text-sm">
+                    Sedang dalam masa penalti
                 </div>
-                @endif
-            </div>
+            @endif
         </div>
     </div>
 </x-layout-peminjam>
