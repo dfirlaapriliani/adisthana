@@ -29,14 +29,14 @@
             <span>Dashboard</span>
         </a>
 
-        {{-- Fasilitas --}}
-        <a href="{{ route('admin.facilities.index') }}"
+        {{-- Buku --}}
+        <a href="{{ route('admin.buku.index') }}"
             class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200
-                {{ request()->routeIs('admin.facilities.*') ? 'bg-[#7B1518]/10 text-[#7B1518] font-medium' : 'text-[#6b5a54] hover:text-[#2C1810] hover:bg-[#7B1518]/5' }}">
+                {{ request()->routeIs('admin.buku.*') ? 'bg-[#7B1518]/10 text-[#7B1518] font-medium' : 'text-[#6b5a54] hover:text-[#2C1810] hover:bg-[#7B1518]/5' }}">
             <svg class="w-4.5 h-4.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
             </svg>
-            <span>Fasilitas</span>
+            <span>Buku</span>
         </a>
 
         {{-- Akun Peminjam --}}
@@ -51,24 +51,22 @@
 
         <p class="text-[#c4a898] text-[10px] uppercase tracking-widest px-3 pb-2 pt-4">Peminjaman</p>
 
-        {{-- Pengajuan --}}
-        <a href="{{ route('admin.bookings.index') }}"
+        {{-- Peminjaman --}}
+        <a href="{{ route('admin.peminjaman.index') }}"
             class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200
-                {{ request()->routeIs('admin.bookings.*') ? 'bg-[#7B1518]/10 text-[#7B1518] font-medium' : 'text-[#6b5a54] hover:text-[#2C1810] hover:bg-[#7B1518]/5' }}">
+                {{ request()->routeIs('admin.peminjaman.*') ? 'bg-[#7B1518]/10 text-[#7B1518] font-medium' : 'text-[#6b5a54] hover:text-[#2C1810] hover:bg-[#7B1518]/5' }}">
             <svg class="w-4.5 h-4.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
-            <span>Pengajuan</span>
-        </a>
-
-        {{-- Verifikasi Foto --}}
-        <a href="{{ route('admin.verifications.index') }}"
-            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200
-                {{ request()->routeIs('admin.verifications.*') ? 'bg-[#7B1518]/10 text-[#7B1518] font-medium' : 'text-[#6b5a54] hover:text-[#2C1810] hover:bg-[#7B1518]/5' }}">
-            <svg class="w-4.5 h-4.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            <span>Verifikasi Foto</span>
+            <span>Peminjaman</span>
+            @php
+                $pendingPeminjaman = \App\Models\Booking::where('status', 'pending')->count();
+            @endphp
+            @if($pendingPeminjaman > 0)
+                <span class="ml-auto bg-[#7B1518] text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                    {{ $pendingPeminjaman }}
+                </span>
+            @endif
         </a>
 
         {{-- Permohonan Akun --}}
@@ -90,9 +88,9 @@
         </a>
 
         {{-- Riwayat --}}
-        <a href="{{ route('admin.history.index') }}"
+        <a href="{{ route('admin.riwayat.index') }}"
             class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200
-                {{ request()->routeIs('admin.history.*') ? 'bg-[#7B1518]/10 text-[#7B1518] font-medium' : 'text-[#6b5a54] hover:text-[#2C1810] hover:bg-[#7B1518]/5' }}">
+                {{ request()->routeIs('admin.riwayat.*') ? 'bg-[#7B1518]/10 text-[#7B1518] font-medium' : 'text-[#6b5a54] hover:text-[#2C1810] hover:bg-[#7B1518]/5' }}">
             <svg class="w-4.5 h-4.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
@@ -102,48 +100,46 @@
     </nav>
 
     {{-- User Info --}}
-<div class="px-3 py-4 border-t border-[#7B1518]/10">
-    <div class="flex items-center gap-3 px-3 py-2">
-        <div class="w-8 h-8 rounded-full bg-[#7B1518]/10 border border-[#7B1518]/20 flex items-center justify-center flex-shrink-0">
-            <span class="text-[#7B1518] text-xs font-semibold">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+    <div class="px-3 py-4 border-t border-[#7B1518]/10">
+        <div class="flex items-center gap-3 px-3 py-2">
+            <div class="w-8 h-8 rounded-full bg-[#7B1518]/10 border border-[#7B1518]/20 flex items-center justify-center flex-shrink-0">
+                <span class="text-[#7B1518] text-xs font-semibold">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-[#2C1810] text-sm font-medium truncate">{{ auth()->user()->name }}</p>
+                <p class="text-[#9a8a80] text-xs truncate">{{ auth()->user()->email }}</p>
+            </div>
         </div>
-        <div class="min-w-0 flex-1">
-            <p class="text-[#2C1810] text-sm font-medium truncate">{{ auth()->user()->name }}</p>
-            <p class="text-[#9a8a80] text-xs truncate">{{ auth()->user()->email }}</p>
-        </div>
+        
+        <button onclick="confirmLogout()"
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#6b5a54] hover:text-[#7B1518] hover:bg-[#7B1518]/5 transition-all duration-200">
+            <svg class="w-4.5 h-4.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span>Keluar</span>
+        </button>
+        
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+            @csrf
+        </form>
     </div>
-    
-    {{-- Logout Button dengan SweetAlert --}}
-    <button onclick="confirmLogout()"
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#6b5a54] hover:text-[#7B1518] hover:bg-[#7B1518]/5 transition-all duration-200">
-        <svg class="w-4.5 h-4.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-        </svg>
-        <span>Keluar</span>
-    </button>
-    
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
-        @csrf
-    </form>
-</div>
 
-<script>
-    function confirmLogout() {
-        Swal.fire({
-            title: 'Keluar dari Adisthana?',
-            text: 'Anda akan keluar dari sesi administrator.',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#7B1518',
-            cancelButtonColor: '#6b5a54',
-            confirmButtonText: 'Ya, Keluar',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('logout-form').submit();
-            }
-        });
-    }
-</script>
-
+    <script>
+        function confirmLogout() {
+            Swal.fire({
+                title: 'Keluar dari Adisthana?',
+                text: 'Anda akan keluar dari sesi administrator.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#7B1518',
+                cancelButtonColor: '#6b5a54',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('logout-form').submit();
+                }
+            });
+        }
+    </script>
 </aside>
