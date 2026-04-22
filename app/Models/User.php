@@ -14,12 +14,13 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'identifier',
         'phone',
+        'class_code',      // ← PASTIKAN INI ADA
+        'class_name',
         'room_location',
         'office_hours',
         'is_blocked',
-        'block_reason',  // tambah ini
+        'block_reason',
         'penalty_until',
     ];
 

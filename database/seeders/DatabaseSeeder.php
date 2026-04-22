@@ -10,11 +10,12 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdminSeeder::class,
-            FacilitySeeder::class,
+            // FacilitySeeder::class, // ← HAPUS ATAU COMMENT
+            // BookSeeder::class,     // ← TAMBAHKAN INI kalau ada
         ]);
         
         $this->command->info('✅ Semua seeder berhasil dijalankan!');
         $this->command->info('📧 Admin: admin@adisthana.com / password123');
-        $this->command->info('🏢 8 Fasilitas contoh sudah siap!');
+        // $this->command->info('📚 Buku contoh sudah siap!');
     }
 }

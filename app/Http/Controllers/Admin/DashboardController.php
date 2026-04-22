@@ -2,28 +2,32 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Booking;
-use App\Models\Facility;
-use App\Models\User;
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Models\Book;
+use App\Models\Booking;
+use App\Models\AccountRequest;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $stats = [
-            'total_facilities' => Facility::count(),
-            'total_users' => User::where('role', 'peminjam')->count(),
-            'pending_bookings' => Booking::where('status', 'pending')->count(),
-            'waiting_verification' => Booking::where('status', 'waiting_verification')->count(),
-            'ongoing_bookings' => Booking::where('status', 'ongoing')->count(),
-        ];
-
-        $recentBookings = Booking::with(['user', 'facility'])
+        $totalPeminjam = User::where('role', 'peminjam')->count();
+        $totalBuku = Book::count();
+        $peminjamanPending = Booking::where('status', 'pending')->count();
+        $permohonanPending = AccountRequest::where('status', 'pending')->count();
+        
+        $peminjamanTerbaru = Booking::with(['user', 'book'])
             ->latest()
-            ->take(10)
+            ->take(5)
             ->get();
 
-        return view('admin.dashboard', compact('stats', 'recentBookings'));
+        return view('admin.dashboard', compact(
+            'totalPeminjam',
+            'totalBuku',
+            'peminjamanPending',
+            'permohonanPending',
+            'peminjamanTerbaru'
+        ));
     }
 }

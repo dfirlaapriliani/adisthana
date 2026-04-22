@@ -14,6 +14,7 @@
             @if(request()->has('from') && request()->from === 'permohonan')
                 <input type="hidden" name="from_permohonan" value="1">
                 <input type="hidden" name="phone_wa" value="{{ request()->phone }}">
+                <input type="hidden" name="from" value="permohonan">
                 
                 {{-- Alert info kalau dari permohonan --}}
                 <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
@@ -41,18 +42,7 @@
                     </div>
                     <div class="flex-1">
                         <p class="text-sm text-[#6b5a54]">Kode Unik Kelas (Auto Generate)</p>
-                       <p class="text-3xl font-bold text-[#7B1518] tracking-wider" style="font-family: 'Courier New', monospace;">
-                        @php
-                            $lastUser = \App\Models\User::where('role', 'peminjam')->whereNotNull('class_code')->orderBy('id', 'desc')->first();
-                            if ($lastUser && $lastUser->class_code) {
-                                preg_match('/KLS-(\d+)/', $lastUser->class_code, $matches);
-                                $nextNumber = isset($matches[1]) ? intval($matches[1]) + 1 : 1;
-                            } else {
-                                $nextNumber = 1;
-                            }
-                            echo 'KLS-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-                        @endphp
-                    </p>
+                        <p class="text-3xl font-bold text-[#7B1518] tracking-wider" style="font-family: 'Courier New', monospace;">{{ $generatedCode }}</p>
                     </div>
                 </div>
                 <p class="text-xs text-[#9a8a80] mt-3">Kode ini akan otomatis dibuat sistem dan tidak dapat diubah</p>
@@ -173,77 +163,4 @@
             </div>
         </form>
     </div>
-
-    {{-- SweetAlert2 untuk notifikasi dari permohonan --}}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-@if(session('new_user_data') && session('new_user_data.show_wa_button'))
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const userData = @json(session('new_user_data'));
-        
-        let message = `Akun kelas berhasil dibuat!\n\n`;
-        message += `Kode Kelas: ${userData.class_code}\n`;
-        message += `Nama Kelas: ${userData.name}\n`;
-        message += `Email: ${userData.email}\n`;
-        message += `Password: ${userData.password}`;
-        
-        const phoneNumber = userData.phone.replace(/\D/g, '');
-        const waMessage = `Halo ${userData.name}, akun Adisthana kamu sudah aktif!%0A%0AKode Kelas: ${userData.class_code}%0AEmail: ${userData.email}%0APassword: ${userData.password}%0A%0ALogin: http://127.0.0.1:8000/login`;
-        const waLink = `https://wa.me/62${phoneNumber}?text=${waMessage}`;
-        
-        // Delay sedikit biar modal bawaan nggak tabrakan
-        setTimeout(() => {
-            Swal.fire({
-                title: '✅ Akun Kelas Berhasil Dibuat!',
-                text: message,
-                icon: 'success',
-                showDenyButton: true,
-                showCancelButton: true,
-                confirmButtonText: 'OK',
-                denyButtonText: '<i class="fab fa-whatsapp"></i> Kirim via WhatsApp',
-                cancelButtonText: '<i class="fas fa-copy"></i> Salin Password',
-                confirmButtonColor: '#7B1518',
-                denyButtonColor: '#25D366',
-                cancelButtonColor: '#6B7280',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isDenied) {
-                    window.open(waLink, '_blank');
-                    Swal.fire({
-                        title: 'Membuka WhatsApp...',
-                        text: 'Kirim pesan ke peminjam',
-                        icon: 'info',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                } else if (result.dismiss === Swal.DismissReason.cancel) {
-                    navigator.clipboard.writeText(userData.password);
-                    Swal.fire({
-                        title: 'Password Disalin!',
-                        text: 'Password sudah tersalin ke clipboard',
-                        icon: 'success',
-                        confirmButtonColor: '#7B1518',
-                        timer: 2000
-                    });
-                }
-            });
-        }, 300);
-    });
-</script>
-@endif
-
-    @if(session('success') && !session('new_user_data'))
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({
-                title: 'Berhasil!',
-                text: '{{ session('success') }}',
-                icon: 'success',
-                confirmButtonColor: '#7B1518'
-            });
-        });
-    </script>
-    @endif
-
 </x-layout-admin>

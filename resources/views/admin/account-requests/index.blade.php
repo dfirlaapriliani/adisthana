@@ -46,21 +46,50 @@
                                         {{ Str::limit($req->keperluan, 50) }}
                                     </div>
                                 </td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm">
-                                    @if($req->status == 'pending')
-                                        <span class="inline-flex rounded-full bg-yellow-100 px-2 text-xs font-semibold leading-5 text-yellow-800">
-                                            Pending
-                                        </span>
-                                    @elseif($req->status == 'approved')
-                                        <span class="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
-                                            Approved
-                                        </span>
-                                    @else
-                                        <span class="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold leading-5 text-red-800">
-                                            Rejected
-                                        </span>
-                                    @endif
-                                </td>
+                                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+    <div class="flex items-center justify-end gap-2">
+        @if($req->status == 'pending')
+            {{-- Setujui --}}
+            <form action="{{ route('admin.account-requests.approve', $req->id) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                <button type="submit" 
+                        class="p-2 rounded-lg text-green-600 hover:text-green-900 hover:bg-green-50 transition"
+                        onclick="return confirm('Setujui permohonan ini?')"
+                        title="Setujui & Buat Akun">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </button>
+            </form>
+            
+            {{-- Buat Akun Langsung --}}
+            <a href="{{ route('admin.users.create', ['from' => 'permohonan', 'nama' => $req->nama, 'kelas' => $req->kelas, 'phone' => $req->no_whatsapp]) }}" 
+               class="p-2 rounded-lg text-blue-600 hover:text-blue-900 hover:bg-blue-50 transition"
+               title="Buat Akun Langsung">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
+                </svg>
+            </a>
+            
+            {{-- Tolak --}}
+            <form action="{{ route('admin.account-requests.reject', $req->id) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                <button type="submit" 
+                        class="p-2 rounded-lg text-red-600 hover:text-red-900 hover:bg-red-50 transition"
+                        onclick="return confirm('Tolak permohonan ini?')"
+                        title="Tolak">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </form>
+        @else
+            <span class="text-gray-400">-</span>
+        @endif
+    </div>
+</td>
                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                     {{ $req->created_at->format('d M Y H:i') }}
                                 </td>

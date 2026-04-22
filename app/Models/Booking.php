@@ -2,23 +2,29 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Booking extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'user_id',
-        'facility_id',
-        'booking_date',
-        'start_time',
-        'end_time',
-        'purpose',
+        'book_id',
+        'tanggal_pinjam',
+        'tanggal_kembali',
+        'tanggal_dikembalikan',
+        'jumlah',
         'status',
-        'admin_note',
+        'catatan',
     ];
 
     protected $casts = [
-        'booking_date' => 'date',
+        'tanggal_pinjam' => 'date',
+        'tanggal_kembali' => 'date',
+        'tanggal_dikembalikan' => 'date',
+        'jumlah' => 'integer',
     ];
 
     public function user()
@@ -26,18 +32,8 @@ class Booking extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function facility()
+    public function book()
     {
-        return $this->belongsTo(Facility::class);
-    }
-
-    public function photos()
-    {
-        return $this->hasMany(BookingPhoto::class);
-    }
-
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class);
+        return $this->belongsTo(Book::class);
     }
 }

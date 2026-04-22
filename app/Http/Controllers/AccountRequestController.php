@@ -23,7 +23,7 @@ class AccountRequestController extends Controller
 
         AccountRequest::create($validated);
 
-        return redirect()->route('permohonan.sukses');
+        return redirect()->route('permohonan.sukses'); // ← PASTIKAN ADA INI
     }
 
     public function sukses()

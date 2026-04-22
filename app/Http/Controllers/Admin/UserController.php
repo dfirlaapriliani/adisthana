@@ -13,7 +13,6 @@ class UserController extends Controller
     {
         $query = User::where('role', 'peminjam');
         
-        // Search
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -29,7 +28,6 @@ class UserController extends Controller
 
     public function create(Request $request)
     {
-        // Hitung kode kelas berikutnya untuk preview
         $lastUser = User::where('role', 'peminjam')
                         ->whereNotNull('class_code')
                         ->orderBy('id', 'desc')
@@ -58,7 +56,6 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        // Generate class_code (KLS-001, KLS-002, dst)
         $lastUser = User::where('role', 'peminjam')
                         ->whereNotNull('class_code')
                         ->orderBy('id', 'desc')
@@ -85,41 +82,16 @@ class UserController extends Controller
             'is_blocked' => false,
         ]);
 
-        // Check if from permohonan
-        $fromPermohonan = $request->has('from_permohonan');
-        $noWa = $request->phone_wa ?? $user->phone;
-
-        // Simpan password asli untuk ditampilkan di popup
         $plainPassword = $validated['password'];
+        $fromPermohonan = $request->has('from_permohonan') || $request->input('from') === 'permohonan';
+        $noWa = $request->phone_wa ?? $request->phone ?? $user->phone;
 
-        if ($fromPermohonan && $noWa) {
-            session()->flash('new_user_data', [
-                'name' => $user->name,
-                'email' => $user->email,
-                'class_code' => $user->class_code,
-                'password' => $plainPassword,
-                'phone' => $noWa,
-                'show_wa_button' => true,
-            ]);
-            
-            // Juga flash untuk modal password
-            session()->flash('generated_password', $plainPassword);
-            session()->flash('new_user_id', $user->id);
-        } else {
-            // Flash data untuk modal password (sesuai sistem yang sudah ada)
-            session()->flash('generated_password', $plainPassword);
-            session()->flash('new_user_id', $user->id);
-            
-            // Flash data tambahan untuk popup SweetAlert2 (buat jaga-jaga)
-            session()->flash('new_user_data', [
-                'name' => $user->name,
-                'email' => $user->email,
-                'class_code' => $user->class_code,
-                'password' => $plainPassword,
-                'phone' => null,
-                'show_wa_button' => false,
-            ]);
-        }
+        session()->flash('generated_password', $plainPassword);
+        session()->flash('new_user_id', $user->id);
+        session()->flash('new_user_data', [
+            'show_wa_button' => $fromPermohonan && !empty($noWa),
+            'phone' => $noWa,
+        ]);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Akun kelas berhasil dibuat!');

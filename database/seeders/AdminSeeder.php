@@ -16,6 +16,7 @@ class AdminSeeder extends Seeder
                 'name' => 'Administrator',
                 'password' => Hash::make('password123'),
                 'role' => 'admin',
+                'class_code' => 'ADMIN-001', // ← TAMBAHKAN INI
                 'phone' => '0812-0000-0000',
                 'room_location' => 'Ruang Tata Usaha',
                 'office_hours' => 'Senin - Jumat, 07.00 - 15.00',

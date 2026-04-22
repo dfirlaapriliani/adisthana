@@ -55,6 +55,8 @@
     @if(session('generated_password') && session('new_user_id'))
     @php
         $newUser = \App\Models\User::find(session('new_user_id'));
+        $showWaButton = session('new_user_data.show_wa_button') ?? false;
+        $userPhone = session('new_user_data.phone') ?? '';
     @endphp
     
     @if($newUser)
@@ -114,10 +116,27 @@
                 </p>
             </div>
             
-            <button @click="show = false" 
-                class="w-full px-4 py-2.5 bg-[#7B1518] text-white rounded-xl text-sm font-medium hover:bg-[#5a0f12] transition">
-                Selesai
-            </button>
+            @if($showWaButton && $userPhone)
+                <div class="flex gap-2">
+                    <button @click="show = false" 
+                        class="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 transition">
+                        Nanti
+                    </button>
+                    <button 
+                        onclick="kirimWhatsApp('{{ $userPhone }}', '{{ $newUser->name }}', '{{ $newUser->class_code }}', '{{ $newUser->email }}', '{{ session('generated_password') }}'); show = false"
+                        class="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-xl text-sm font-medium hover:bg-green-600 transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.101.116-.202.24-.087.462.115.217.505.836 1.084 1.354.744.663 1.371.869 1.566.966.195.097.308.082.424-.05.116-.13.491-.577.622-.779.13-.202.26-.173.447-.087.187.087 1.183.558 1.386.663.202.105.337.159.389.245.052.087.052.491-.093.896z"/>
+                        </svg>
+                        Kirim WhatsApp
+                    </button>
+                </div>
+            @else
+                <button @click="show = false" 
+                    class="w-full px-4 py-2.5 bg-[#7B1518] text-white rounded-xl text-sm font-medium hover:bg-[#5a0f12] transition">
+                    Selesai
+                </button>
+            @endif
         </div>
     </div>
     @endif
@@ -164,14 +183,11 @@
                 <tbody class="divide-y divide-[#7B1518]/5">
                     @forelse($users as $user)
                     <tr class="hover:bg-[#F0EBE3]/30 transition">
-                        {{-- Kode Kelas --}}
                         <td class="px-6 py-4">
                             <span class="text-sm font-mono font-medium text-[#7B1518] bg-[#7B1518]/5 px-2.5 py-1 rounded-lg">
                                 {{ $user->class_code ?? '-' }}
                             </span>
                         </td>
-                        
-                        {{-- Nama Kelas --}}
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full bg-[#7B1518]/10 border border-[#7B1518]/20 flex items-center justify-center flex-shrink-0">
@@ -195,18 +211,12 @@
                                 </div>
                             </div>
                         </td>
-                        
-                        {{-- Email --}}
                         <td class="px-6 py-4">
                             <p class="text-sm text-[#2C1810]">{{ $user->email }}</p>
                         </td>
-                        
-                        {{-- No. HP --}}
                         <td class="px-6 py-4">
                             <p class="text-sm text-[#2C1810]">{{ $user->phone ?? '-' }}</p>
                         </td>
-                        
-                        {{-- Status --}}
                         <td class="px-6 py-4">
                             @if($user->is_blocked)
                             <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 text-xs rounded-full">
@@ -224,11 +234,8 @@
                             </span>
                             @endif
                         </td>
-                        
-                        {{-- Actions --}}
                         <td class="px-6 py-4">
                             <div class="flex items-center justify-end gap-1">
-                                {{-- Edit --}}
                                 <a href="{{ route('admin.users.edit', $user) }}" 
                                     class="p-2 rounded-lg text-[#6b5a54] hover:text-[#7B1518] hover:bg-[#7B1518]/5 transition"
                                     title="Edit">
@@ -237,7 +244,6 @@
                                     </svg>
                                 </a>
                                 
-                                {{-- Clear Penalty --}}
                                 @if($user->hasActivePenalty())
                                 <button 
                                     onclick="confirmClearPenalty({{ $user->id }}, '{{ $user->name }}', '{{ $user->class_code }}')"
@@ -252,7 +258,6 @@
                                 </form>
                                 @endif
                                 
-                                {{-- Toggle Block --}}
                                 <button 
                                     onclick="confirmToggleBlock({{ $user->id }}, '{{ $user->name }}', '{{ $user->class_code }}', {{ $user->is_blocked ? 'true' : 'false' }})"
                                     class="p-2 rounded-lg {{ $user->is_blocked ? 'text-green-600 hover:text-green-700 hover:bg-green-50' : 'text-red-600 hover:text-red-700 hover:bg-red-50' }} transition"
@@ -271,7 +276,6 @@
                                     @csrf
                                 </form>
                                 
-                                {{-- Delete --}}
                                 <button 
                                     onclick="confirmDelete({{ $user->id }}, '{{ $user->name }}', '{{ $user->class_code }}')"
                                     class="p-2 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
@@ -313,7 +317,6 @@
             </table>
         </div>
         
-        {{-- Pagination --}}
         @if($users->hasPages())
         <div class="px-6 py-4 border-t border-[#7B1518]/10">
             {{ $users->appends(request()->query())->links() }}
@@ -321,7 +324,6 @@
         @endif
     </div>
 
-    {{-- Info Summary --}}
     @if($users->count() > 0)
     <div class="mt-4 flex items-center gap-4 text-xs text-[#9a8a80]">
         <div class="flex items-center gap-1.5">
@@ -342,8 +344,15 @@
     </div>
     @endif
 
-    {{-- SweetAlert Scripts --}}
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+    function kirimWhatsApp(phone, name, classCode, email, password) {
+        const phoneNumber = phone.replace(/\D/g, '');
+        const waMessage = `Halo ${name}, akun Adisthana kamu sudah aktif!%0A%0AKode Kelas: ${classCode}%0AEmail: ${email}%0APassword: ${password}%0A%0ALogin: http://127.0.0.1:8000/login`;
+        window.open(`https://wa.me/62${phoneNumber}?text=${waMessage}`, '_blank');
+    }
+    
     function confirmDelete(id, name, code) {
         Swal.fire({
             title: 'Hapus Akun Kelas?',
@@ -370,7 +379,6 @@
 
     function confirmToggleBlock(id, name, code, isBlocked) {
         if (isBlocked) {
-            // Kalau mau AKTIFKAN (unblock)
             Swal.fire({
                 title: 'Aktifkan Akun Kelas?',
                 html: `
@@ -389,7 +397,6 @@
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Submit form unblock (tanpa alasan)
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = `/admin/users/${id}/toggle-block`;
@@ -399,7 +406,6 @@
                 }
             });
         } else {
-            // Kalau mau BLOKIR - minta alasan
             Swal.fire({
                 title: 'Blokir Akun Kelas?',
                 html: `
@@ -428,7 +434,6 @@
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Submit form block dengan alasan
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = `/admin/users/${id}/toggle-block`;
@@ -466,5 +471,5 @@
             }
         });
     }
-</script>
+    </script>
 </x-layout-admin>
