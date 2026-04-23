@@ -14,7 +14,7 @@ class AccountRequestController extends Controller
         return view('admin.account-requests.index', compact('requests'));
     }
 
-    public function approve($id)
+    public function setujui($id)
     {
         $request = AccountRequest::findOrFail($id);
         $request->update(['status' => 'approved']);
@@ -27,7 +27,7 @@ class AccountRequestController extends Controller
         ]);
     }
 
-    public function reject($id)
+    public function tolak($id)
     {
         $request = AccountRequest::findOrFail($id);
         $request->update(['status' => 'rejected']);

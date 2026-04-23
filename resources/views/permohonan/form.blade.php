@@ -5,81 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Permohonan Akun - Adisthana</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #F0EBE3; font-family: 'DM Sans', sans-serif; min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+        h1 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: #7B1518; text-align: center; margin-bottom: 20px; }
+        .card { background: white; border-radius: 16px; padding: 28px 32px; width: min(680px, 100%); border: 1px solid #E5D9C8; display: flex; flex-direction: column; gap: 14px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+        label { display: block; font-size: 11px; font-weight: 600; color: #7B1518; margin-bottom: 5px; letter-spacing: 0.04em; text-transform: uppercase; }
+        input, textarea { width: 100%; padding: 9px 13px; border-radius: 9px; border: 1.5px solid #E5D9C8; font-size: 13px; font-family: 'DM Sans', sans-serif; color: #3B2A1A; background: #FDFAF7; }
+        input:focus, textarea:focus { border-color: #7B1518; outline: none; }
+        textarea { height: 78px; resize: none; }
+        .footer { display: flex; align-items: center; justify-content: space-between; }
+        a { font-size: 12px; color: #A0896B; text-decoration: none; }
+        button { background: #7B1518; color: white; border: none; padding: 10px 26px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        button:hover { background: #691215; }
+        .error { color: #dc2626; font-size: 12px; margin-top: 4px; }
+        @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+    </style>
 </head>
-<body class="font-['DM_Sans']" style="background-color: #F0EBE3;">
-    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full space-y-8">
-            <div>
-                <h2 class="text-center font-['Cormorant_Garamond'] text-4xl font-bold" style="color: #7B1518;">
-                    Adisthana
-                </h2>
-                <p class="mt-2 text-center text-gray-600">
-                    Permohonan Akun Peminjaman Buku
-                </p>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-lg p-8">
-                <form action="{{ route('permohonan.store') }}" method="POST" class="space-y-6">
-                    @csrf
-                    
+<body>
+    <div style="width: 100%; max-width: 680px;">
+        <h1>Adisthana</h1>
+        <div class="card">
+            <form action="{{ route('permohonan.store') }}" method="POST" style="display:contents;">
+                @csrf
+                <div class="row">
                     <div>
-                        <label for="nama" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                        <input type="text" name="nama" id="nama" required 
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7B1518] focus:ring focus:ring-[#7B1518] focus:ring-opacity-20"
-                               value="{{ old('nama') }}">
-                        @error('nama')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <label>Nama Lengkap Ketua Kelas</label>
+                        <input type="text" name="nama" value="{{ old('nama') }}" placeholder="Nama Lengkap Ketua Kelas" required>
+                        @error('nama') <div class="error">{{ $message }}</div> @enderror
                     </div>
-
                     <div>
-                        <label for="kelas" class="block text-sm font-medium text-gray-700">Kelas</label>
-                        <input type="text" name="kelas" id="kelas" required 
-                               placeholder="Contoh: XII IPA 3"
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7B1518] focus:ring focus:ring-[#7B1518] focus:ring-opacity-20"
-                               value="{{ old('kelas') }}">
-                        @error('kelas')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <label>Kelas & Wali Kelas</label>
+                        <input type="text" name="kelas" value="{{ old('kelas') }}" placeholder="XII IPA 3 - Ibu Kaita" required>
+                        @error('kelas') <div class="error">{{ $message }}</div> @enderror
                     </div>
-
                     <div>
-                        <label for="no_whatsapp" class="block text-sm font-medium text-gray-700">No WhatsApp</label>
-                        <input type="text" name="no_whatsapp" id="no_whatsapp" required 
-                               placeholder="Contoh: 08123456789"
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7B1518] focus:ring focus:ring-[#7B1518] focus:ring-opacity-20"
-                               value="{{ old('no_whatsapp') }}">
-                        @error('no_whatsapp')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <label>No WhatsApp</label>
+                        <input type="tel" name="no_whatsapp" value="{{ old('no_whatsapp') }}" placeholder="08123456789" required>
+                        @error('no_whatsapp') <div class="error">{{ $message }}</div> @enderror
                     </div>
-
-                    <div>
-                        <label for="keperluan" class="block text-sm font-medium text-gray-700">Keperluan</label>
-                        <textarea name="keperluan" id="keperluan" rows="4" required 
-                                  placeholder="Jelaskan keperluan Anda meminjam buku..."
-                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#7B1518] focus:ring focus:ring-[#7B1518] focus:ring-opacity-20">{{ old('keperluan') }}</textarea>
-                        @error('keperluan')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <button type="submit" 
-                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7B1518]"
-                                style="background-color: #7B1518;">
-                            Ajukan Permohonan
-                        </button>
-                    </div>
-                </form>
-
-                <div class="mt-6 text-center">
-                    <a href="{{ url('/') }}" class="text-sm text-gray-600 hover:text-[#7B1518]">
-                        ← Kembali ke Beranda
-                    </a>
                 </div>
-            </div>
+                <div>
+                    <label>Keperluan</label>
+                    <textarea name="keperluan" placeholder="Jelaskan keperluan Anda..." required>{{ old('keperluan') }}</textarea>
+                    @error('keperluan') <div class="error">{{ $message }}</div> @enderror
+                </div>
+                <div class="footer">
+                    <a href="{{ url('/') }}">← Kembali ke Beranda</a>
+                    <button type="submit">Ajukan Permohonan</button>
+                </div>
+            </form>
         </div>
     </div>
 </body>

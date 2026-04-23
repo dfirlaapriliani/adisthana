@@ -194,10 +194,10 @@
         </div>
         
         {{-- Pagination --}}
-        {{-- @if($requests->hasPages())
+        @if($requests->hasPages())
         <div class="px-6 py-4 border-t border-[#7B1518]/10">
             {{ $requests->links() }}
         </div>
-        @endif --}}
+        @endif
     </div>
 </x-layout-admin>
