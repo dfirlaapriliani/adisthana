@@ -1,48 +1,36 @@
 <?php
+// app/Models/Book.php
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Book extends Model
 {
-    use HasFactory;
-
+    use SoftDeletes;
+    
     protected $fillable = [
         'judul',
         'pengarang',
-        'tahun_terbit',
         'penerbit',
+        'tahun_terbit',
         'stok',
         'deskripsi',
         'foto',
         'status',
-        'kategori_id',  // ← PASTIKAN INI ADA
+        'kategori_id',
     ];
-
-    protected $casts = [
-        'tahun_terbit' => 'integer',
-        'stok' => 'integer',
-    ];
-
-    public function bookings()
-    {
-        return $this->hasMany(Booking::class);
-    }
-
-    public function isAvailable()
-    {
-        return $this->status === 'available' && $this->stok > 0;
-    }
-
-    public function scopeAvailable($query)
-    {
-        return $query->where('status', 'available')->where('stok', '>', 0);
-    }
-
+    
+    protected $dates = ['deleted_at'];
+    
     public function kategori()
     {
         return $this->belongsTo(Kategori::class);
+    }
+    
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
     }
 }

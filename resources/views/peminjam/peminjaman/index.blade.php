@@ -90,22 +90,23 @@
                             <p class="text-[#8B3A3A] text-xs font-medium">{{ $item->jumlah }} buku</p>
                         </div>
                         @php
-                            $statusColors = [
-                                'pending' => 'bg-yellow-100 text-yellow-800 border-2 border-yellow-400',
-                                'approved' => 'bg-blue-100 text-blue-800 border-2 border-blue-400',
-                                'borrowed' => 'bg-purple-100 text-purple-800 border-2 border-purple-400',
-                                'returned' => 'bg-green-100 text-green-800 border-2 border-green-400',
-                                'rejected' => 'bg-red-100 text-red-800 border-2 border-red-400',
-                                'cancelled' => 'bg-gray-100 text-gray-800 border-2 border-gray-400',
-                            ];
                             $statusLabels = [
-                                'pending' => 'Pending',
-                                'approved' => 'Disetujui',
-                                'borrowed' => 'Dipinjam',
-                                'returned' => 'Dikembalikan',
-                                'rejected' => 'Ditolak',
-                                'cancelled' => 'Dibatalkan',
-                            ];
+                            'pending' => 'Menunggu',
+                            'approved' => 'Disetujui',
+                            'borrowed' => 'Dipinjam',  // ✅ Status baru
+                            'returned' => 'Dikembalikan',
+                            'rejected' => 'Ditolak',
+                            'cancelled' => 'Dibatalkan',
+                        ];
+
+                        $statusColors = [
+                            'pending' => 'text-yellow-800 bg-yellow-100 border-2 border-yellow-400',
+                            'approved' => 'text-blue-800 bg-blue-100 border-2 border-blue-400',
+                            'borrowed' => 'text-purple-800 bg-purple-100 border-2 border-purple-400', // ✅ Warna baru
+                            'returned' => 'text-green-800 bg-green-100 border-2 border-green-400',
+                            'rejected' => 'text-red-800 bg-red-100 border-2 border-red-400',
+                            'cancelled' => 'text-gray-800 bg-gray-100 border-2 border-gray-400',
+                        ];
                         @endphp
                         <span class="px-2 py-0.5 text-[10px] font-bold rounded-full {{ $statusColors[$item->status] ?? 'bg-gray-100 text-gray-800 border-2 border-gray-400' }}">
                             {{ $statusLabels[$item->status] ?? $item->status }}

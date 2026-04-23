@@ -62,6 +62,8 @@ Route::prefix('admin')
         
         // Buku Management
         Route::resource('buku', AdminBukuController::class);
+        Route::post('buku/{id}/restore', [AdminBukuController::class, 'restore'])->name('buku.restore');
+        Route::delete('buku/{id}/force-delete', [AdminBukuController::class, 'forceDelete'])->name('buku.force-delete');
         
         // Users Management (Akun Peminjam)
         Route::resource('users', AdminUserController::class);
@@ -74,7 +76,11 @@ Route::prefix('admin')
         Route::post('peminjaman/{peminjaman}/setujui', [AdminPeminjamanController::class, 'setujui'])->name('peminjaman.setujui');
         Route::post('peminjaman/{peminjaman}/tolak', [AdminPeminjamanController::class, 'tolak'])->name('peminjaman.tolak');
         Route::post('peminjaman/{peminjaman}/kembalikan', [AdminPeminjamanController::class, 'kembalikan'])->name('peminjaman.kembalikan');
-        
+
+        // Di dalam group admin
+    // Di dalam group admin
+Route::post('peminjaman/{peminjaman}/diambil', [AdminPeminjamanController::class, 'diambil'])->name('peminjaman.diambil');
+
         // Account Requests (Permohonan Akun)
         Route::get('/account-requests', [AdminAccountRequestController::class, 'index'])->name('account-requests.index');
         Route::patch('/account-requests/{id}/setujui', [AdminAccountRequestController::class, 'setujui'])->name('account-requests.setujui');
@@ -102,6 +108,7 @@ Route::prefix('admin')
         Route::get('notifikasi', [AdminNotificationController::class, 'index'])->name('notifikasi.index');
         Route::post('notifikasi/{id}/baca', [AdminNotificationController::class, 'markAsRead'])->name('notifikasi.baca');
         Route::post('notifikasi/baca-semua', [AdminNotificationController::class, 'markAllAsRead'])->name('notifikasi.baca-semua');
+        Route::get('notifikasi/unread-count', [AdminNotificationController::class, 'getUnreadCount'])->name('notifikasi.unread-count');
         
         // Profile
         Route::get('profile', function () {
@@ -136,6 +143,7 @@ Route::prefix('peminjam')
         Route::get('notifikasi', [PeminjamNotificationController::class, 'index'])->name('notifikasi.index');
         Route::post('notifikasi/{id}/baca', [PeminjamNotificationController::class, 'markAsRead'])->name('notifikasi.baca');
         Route::post('notifikasi/baca-semua', [PeminjamNotificationController::class, 'markAllAsRead'])->name('notifikasi.baca-semua');
+        Route::get('notifikasi/unread-count', [PeminjamNotificationController::class, 'getUnreadCount'])->name('notifikasi.unread-count');
         
         // Riwayat
         Route::get('riwayat', function () {

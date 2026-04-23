@@ -2,35 +2,37 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Booking;
-use App\Models\UserNotification;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class PeminjamanController extends Controller
 {
     public function index(Request $request)
     {
-        $status = $request->status ?? 'pending';
-        
         $query = Booking::with(['user', 'book']);
         
-        if ($status !== 'semua') {
-            $query->where('status', $status);
+        $status = $request->status ?? '';
+        
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('class_code', 'like', "%{$search}%");
+            })->orWhereHas('book', function($q) use ($search) {
+                $q->where('judul', 'like', "%{$search}%");
+            });
         }
         
         $peminjaman = $query->latest()->paginate(15);
-
-        $jumlah = [
-            'semua' => Booking::count(),
-            'pending' => Booking::where('status', 'pending')->count(),
-            'approved' => Booking::where('status', 'approved')->count(),
-            'borrowed' => Booking::where('status', 'borrowed')->count(),
-            'returned' => Booking::where('status', 'returned')->count(),
-            'rejected' => Booking::where('status', 'rejected')->count(),
-        ];
-
-        return view('admin.peminjaman.index', compact('peminjaman', 'status', 'jumlah'));
+        
+        return view('admin.peminjaman.index', compact('peminjaman', 'status'));
     }
 
     public function show(Booking $peminjaman)
@@ -42,96 +44,188 @@ class PeminjamanController extends Controller
     public function setujui(Booking $peminjaman)
     {
         if ($peminjaman->status !== 'pending') {
-            return back()->with('error', 'Hanya peminjaman pending yang bisa disetujui.');
+            return back()->with('error', 'Peminjaman tidak dapat disetujui.');
         }
-
-        $buku = $peminjaman->book;
         
-        if ($buku->stok < $peminjaman->jumlah) {
+        if ($peminjaman->book->stok < $peminjaman->jumlah) {
             return back()->with('error', 'Stok buku tidak mencukupi.');
         }
-
-        // Kurangi stok
-        $buku->stok -= $peminjaman->jumlah;
-        if ($buku->stok == 0) {
-            $buku->status = 'unavailable';
+        
+        $peminjaman->update(['status' => 'approved']);
+        $peminjaman->book->decrement('stok', $peminjaman->jumlah);
+        
+        // NOTIFIKASI KE USER
+        DB::table('user_notifications')->insert([
+            'user_id' => $peminjaman->user_id,
+            'booking_id' => $peminjaman->id,
+            'book_id' => $peminjaman->book_id,
+            'title' => '✅ Peminjaman Disetujui',
+            'message' => 'Peminjaman buku "' . $peminjaman->book->judul . '" telah disetujui. Silakan ambil buku di perpustakaan.',
+            'type' => 'booking_approved',
+            'icon' => '✅',
+            'url' => route('peminjam.peminjaman.show', $peminjaman->id),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        
+        // NOTIFIKASI KE ADMIN LAIN
+        $admins = \App\Models\User::where('role', 'admin')->where('id', '!=', auth()->id())->get();
+        foreach ($admins as $admin) {
+            DB::table('user_notifications')->insert([
+                'user_id' => $admin->id,
+                'booking_id' => $peminjaman->id,
+                'book_id' => $peminjaman->book_id,
+                'title' => '✅ Peminjaman Disetujui',
+                'message' => auth()->user()->name . ' menyetujui peminjaman buku "' . $peminjaman->book->judul . '" oleh ' . $peminjaman->user->name,
+                'type' => 'booking_approved',
+                'icon' => '✅',
+                'url' => route('admin.peminjaman.show', $peminjaman->id),
+                'is_read' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
-        $buku->save();
-
-        $peminjaman->update(['status' => 'borrowed']);
-
-        // Notifikasi ke peminjam
-        UserNotification::sendNotification(
-            $peminjaman->user_id,
-            'Peminjaman Disetujui',
-            'Peminjaman buku "' . $buku->judul . '" telah disetujui. Silakan ambil buku di perpustakaan.',
-            'success',
-            $peminjaman->id
-        );
-
-        return back()->with('success', 'Peminjaman berhasil disetujui.');
+        
+        return back()->with('success', 'Peminjaman disetujui.');
     }
 
     public function tolak(Request $request, Booking $peminjaman)
     {
-        $request->validate(['catatan' => 'required|string']);
-
-        if ($peminjaman->status !== 'pending') {
-            return back()->with('error', 'Hanya peminjaman pending yang bisa ditolak.');
+        if (!in_array($peminjaman->status, ['pending', 'approved'])) {
+            return back()->with('error', 'Peminjaman tidak dapat ditolak.');
         }
-
+        
+        $request->validate([
+            'catatan_penolakan' => 'required|string|max:500'
+        ]);
+        
         $peminjaman->update([
             'status' => 'rejected',
-            'catatan' => $request->catatan,
+            'catatan' => $request->catatan_penolakan
         ]);
-
-        // Notifikasi ke peminjam
-        UserNotification::sendNotification(
-            $peminjaman->user_id,
-            'Peminjaman Ditolak',
-            'Peminjaman buku "' . $peminjaman->book->judul . '" ditolak. Alasan: ' . $request->catatan,
-            'error',
-            $peminjaman->id
-        );
-
-        return back()->with('success', 'Peminjaman berhasil ditolak.');
+        
+        // NOTIFIKASI KE USER
+        DB::table('user_notifications')->insert([
+            'user_id' => $peminjaman->user_id,
+            'booking_id' => $peminjaman->id,
+            'book_id' => $peminjaman->book_id,
+            'title' => '❌ Peminjaman Ditolak',
+            'message' => 'Peminjaman buku "' . $peminjaman->book->judul . '" ditolak. Alasan: ' . $request->catatan_penolakan,
+            'type' => 'booking_rejected',
+            'icon' => '❌',
+            'url' => route('peminjam.peminjaman.show', $peminjaman->id),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        
+        // NOTIFIKASI KE ADMIN LAIN
+        $admins = \App\Models\User::where('role', 'admin')->where('id', '!=', auth()->id())->get();
+        foreach ($admins as $admin) {
+            DB::table('user_notifications')->insert([
+                'user_id' => $admin->id,
+                'booking_id' => $peminjaman->id,
+                'book_id' => $peminjaman->book_id,
+                'title' => '❌ Peminjaman Ditolak',
+                'message' => auth()->user()->name . ' menolak peminjaman buku "' . $peminjaman->book->judul . '" oleh ' . $peminjaman->user->name,
+                'type' => 'booking_rejected',
+                'icon' => '❌',
+                'url' => route('admin.peminjaman.show', $peminjaman->id),
+                'is_read' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+        
+        return back()->with('success', 'Peminjaman ditolak.');
     }
 
-    public function kembalikan(Booking $peminjaman)
+    public function diambil(Booking $peminjaman)
     {
-        if ($peminjaman->status !== 'borrowed') {
-            return back()->with('error', 'Hanya peminjaman aktif yang bisa dikembalikan.');
+        if ($peminjaman->status !== 'approved') {
+            return back()->with('error', 'Peminjaman harus disetujui terlebih dahulu.');
         }
-
-        $buku = $peminjaman->book;
         
-        // Tambah stok
-        $buku->stok += $peminjaman->jumlah;
-        $buku->status = 'available';
-        $buku->save();
+        $peminjaman->update(['status' => 'borrowed']);
+        
+        // NOTIFIKASI KE USER
+        DB::table('user_notifications')->insert([
+            'user_id' => $peminjaman->user_id,
+            'booking_id' => $peminjaman->id,
+            'book_id' => $peminjaman->book_id,
+            'title' => '📖 Buku Sedang Dipinjam',
+            'message' => 'Buku "' . $peminjaman->book->judul . '" telah diambil. Jangan lupa dikembalikan sebelum ' . Carbon::parse($peminjaman->tanggal_kembali)->format('d M Y'),
+            'type' => 'booking_borrowed',
+            'icon' => '📖',
+            'url' => route('peminjam.peminjaman.show', $peminjaman->id),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        
+        return back()->with('success', 'Buku ditandai sudah diambil.');
+    }
 
+    public function kembalikan(Request $request, Booking $peminjaman)
+    {
+        if (!in_array($peminjaman->status, ['approved', 'borrowed'])) {
+            return back()->with('error', 'Peminjaman tidak dapat dikembalikan.');
+        }
+        
         $peminjaman->update([
             'status' => 'returned',
-            'tanggal_dikembalikan' => now(),
+            'tanggal_dikembalikan' => now()
         ]);
-
+        
+        $peminjaman->book->increment('stok', $peminjaman->jumlah);
+        
         // Cek keterlambatan
-        if (now()->gt($peminjaman->tanggal_kembali)) {
-            $terlambat = now()->diffInDays($peminjaman->tanggal_kembali);
-            $user = $peminjaman->user;
-            $user->penalty_until = now()->addDays($terlambat);
-            $user->save();
+        $isLate = Carbon::parse($peminjaman->tanggal_kembali)->lt(now());
+        $lateMessage = '';
+        
+        if ($isLate) {
+            $lateDays = Carbon::parse($peminjaman->tanggal_kembali)->diffInDays(now());
+            $lateMessage = ' (Terlambat ' . $lateDays . ' hari)';
+            
+            $peminjaman->user->update([
+                'penalty_until' => now()->addDays($lateDays * 2)
+            ]);
         }
-
-        // Notifikasi ke peminjam
-        UserNotification::sendNotification(
-            $peminjaman->user_id,
-            'Buku Dikembalikan',
-            'Buku "' . $buku->judul . '" telah dikembalikan.',
-            'info',
-            $peminjaman->id
-        );
-
+        
+        // NOTIFIKASI KE USER
+        DB::table('user_notifications')->insert([
+            'user_id' => $peminjaman->user_id,
+            'booking_id' => $peminjaman->id,
+            'book_id' => $peminjaman->book_id,
+            'title' => '📦 Buku Dikembalikan',
+            'message' => 'Buku "' . $peminjaman->book->judul . '" telah dikembalikan.' . $lateMessage,
+            'type' => 'booking_returned',
+            'icon' => '📦',
+            'url' => route('peminjam.riwayat.index'),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        
+        // NOTIFIKASI KE ADMIN LAIN
+        $admins = \App\Models\User::where('role', 'admin')->where('id', '!=', auth()->id())->get();
+        foreach ($admins as $admin) {
+            DB::table('user_notifications')->insert([
+                'user_id' => $admin->id,
+                'booking_id' => $peminjaman->id,
+                'book_id' => $peminjaman->book_id,
+                'title' => '📦 Buku Dikembalikan',
+                'message' => $peminjaman->user->name . ' mengembalikan buku "' . $peminjaman->book->judul . '"' . $lateMessage,
+                'type' => 'booking_returned',
+                'icon' => '📦',
+                'url' => route('admin.peminjaman.show', $peminjaman->id),
+                'is_read' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+        
         return back()->with('success', 'Buku berhasil dikembalikan.');
     }
 }

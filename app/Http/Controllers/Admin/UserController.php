@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -56,20 +57,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        $lastUser = User::where('role', 'peminjam')
-                        ->whereNotNull('class_code')
-                        ->orderBy('id', 'desc')
-                        ->first();
-        
-        if ($lastUser && $lastUser->class_code) {
-            preg_match('/KLS-(\d+)/', $lastUser->class_code, $matches);
-            $lastNumber = isset($matches[1]) ? intval($matches[1]) : 0;
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        
-        $classCode = 'KLS-' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+        $classCode = User::generateClassCode();
 
         $user = User::create([
             'name' => $validated['name'],
@@ -91,6 +79,32 @@ class UserController extends Controller
         session()->flash('new_user_data', [
             'show_wa_button' => $fromPermohonan && !empty($noWa),
             'phone' => $noWa,
+        ]);
+
+        // NOTIFIKASI KE USER BARU
+        DB::table('user_notifications')->insert([
+            'user_id' => $user->id,
+            'title' => '🎉 Selamat Datang di Adisthana!',
+            'message' => 'Akun Anda telah dibuat. Kode Kelas: ' . $classCode . '. Silakan login untuk mulai meminjam buku.',
+            'type' => 'user_created',
+            'icon' => '🎉',
+            'url' => route('peminjam.dashboard'),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // NOTIFIKASI KE ADMIN (HARDCODE ID 1)
+        DB::table('user_notifications')->insert([
+            'user_id' => 1,
+            'title' => '👤 Akun Kelas Baru',
+            'message' => auth()->user()->name . ' membuat akun untuk ' . $user->name . ' (' . $classCode . ')',
+            'type' => 'user_created',
+            'icon' => '👤',
+            'url' => route('admin.users.show', $user->id),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         return redirect()->route('admin.users.index')
@@ -138,7 +152,22 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        $userName = $user->name;
+        $classCode = $user->class_code;
         $user->delete();
+        
+        DB::table('user_notifications')->insert([
+            'user_id' => 1,
+            'title' => '🗑️ Akun Kelas Dihapus',
+            'message' => auth()->user()->name . ' menghapus akun ' . $userName . ' (' . $classCode . ')',
+            'type' => 'user_deleted',
+            'icon' => '🗑️',
+            'url' => route('admin.users.index'),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        
         return redirect()->route('admin.users.index')
             ->with('success', 'Akun kelas berhasil dihapus!');
     }
@@ -156,6 +185,35 @@ class UserController extends Controller
         $user->save();
         
         $status = $user->is_blocked ? 'diblokir' : 'diaktifkan';
+        $icon = $user->is_blocked ? '🚫' : '✅';
+        $message = $user->is_blocked 
+            ? 'Akun Anda telah diblokir. Alasan: ' . ($user->block_reason ?? 'Tidak ada alasan')
+            : 'Akun Anda telah diaktifkan kembali. Selamat menggunakan Adisthana!';
+        
+        DB::table('user_notifications')->insert([
+            'user_id' => $user->id,
+            'title' => $icon . ' Status Akun: ' . ucfirst($status),
+            'message' => $message,
+            'type' => $user->is_blocked ? 'user_blocked' : 'user_activated',
+            'icon' => $icon,
+            'url' => route('peminjam.dashboard'),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        
+        DB::table('user_notifications')->insert([
+            'user_id' => 1,
+            'title' => $icon . ' Akun ' . ucfirst($status),
+            'message' => auth()->user()->name . ' ' . ($user->is_blocked ? 'memblokir' : 'mengaktifkan') . ' akun ' . $user->name . ' (' . $user->class_code . ')',
+            'type' => $user->is_blocked ? 'user_blocked' : 'user_activated',
+            'icon' => $icon,
+            'url' => route('admin.users.show', $user->id),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        
         return redirect()->back()
             ->with('success', "Akun kelas berhasil {$status}!");
     }
@@ -164,6 +222,30 @@ class UserController extends Controller
     {
         $user->penalty_until = null;
         $user->save();
+        
+        DB::table('user_notifications')->insert([
+            'user_id' => $user->id,
+            'title' => '🎊 Penalti Dihapus',
+            'message' => 'Masa penalti Anda telah dihapus oleh admin. Anda dapat meminjam buku kembali.',
+            'type' => 'penalty_cleared',
+            'icon' => '🎊',
+            'url' => route('peminjam.buku.index'),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        
+        DB::table('user_notifications')->insert([
+            'user_id' => 1,
+            'title' => '🎊 Penalti Dihapus',
+            'message' => auth()->user()->name . ' menghapus penalti untuk ' . $user->name . ' (' . $user->class_code . ')',
+            'type' => 'penalty_cleared',
+            'icon' => '🎊',
+            'url' => route('admin.users.show', $user->id),
+            'is_read' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
         
         return redirect()->back()
             ->with('success', 'Penalti berhasil dihapus!');

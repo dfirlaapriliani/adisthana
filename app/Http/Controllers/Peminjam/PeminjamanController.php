@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/Peminjam/PeminjamanController.php
 
 namespace App\Http\Controllers\Peminjam;
 
@@ -27,8 +28,14 @@ class PeminjamanController extends Controller
     {
         $buku = Book::findOrFail($request->buku_id);
         
+        // Cek stok
         if ($buku->stok <= 0) {
             return back()->with('error', 'Maaf, stok buku sedang kosong.');
+        }
+        
+        // Cek penalti
+        if (auth()->user()->hasActivePenalty()) {
+            return back()->with('error', 'Anda sedang dalam masa penalti. Tidak dapat mengajukan peminjaman.');
         }
 
         return view('peminjam.peminjaman.create', compact('buku'));
@@ -46,8 +53,14 @@ class PeminjamanController extends Controller
 
         $buku = Book::findOrFail($validated['buku_id']);
         
+        // Cek stok
         if ($buku->stok < $validated['jumlah']) {
-            return back()->with('error', 'Stok buku tidak mencukupi.');
+            return back()->with('error', 'Stok buku tidak mencukupi. Stok tersedia: ' . $buku->stok);
+        }
+        
+        // Cek penalti
+        if (auth()->user()->hasActivePenalty()) {
+            return back()->with('error', 'Anda sedang dalam masa penalti.');
         }
 
         $peminjaman = Booking::create([
@@ -60,17 +73,18 @@ class PeminjamanController extends Controller
             'status' => 'pending',
         ]);
 
-        // Notifikasi ke admin
-        $admins = \App\Models\User::where('role', 'admin')->get();
-        foreach ($admins as $admin) {
-            UserNotification::sendNotification(
-                $admin->id,
-                'Pengajuan Peminjaman Baru',
-                auth()->user()->name . ' mengajukan peminjaman buku "' . $buku->judul . '"',
-                'info',
-                $peminjaman->id
-            );
-        }
+        // ✅ NOTIFIKASI KE ADMIN: Peminjaman Baru
+        UserNotification::sendToAdmins(
+            '📚 Pengajuan Peminjaman Baru',
+            auth()->user()->name . ' (' . (auth()->user()->class_code ?? 'KLS-') . ') mengajukan peminjaman buku "' . $buku->judul . '" (' . $validated['jumlah'] . ' buku)',
+            'booking_created',
+            [
+                'booking_id' => $peminjaman->id,
+                'book_id' => $buku->id,
+                'icon' => '📚',
+                'url' => route('admin.peminjaman.show', $peminjaman->id)
+            ]
+        );
 
         return redirect()->route('peminjam.peminjaman.index')
             ->with('success', 'Pengajuan peminjaman berhasil dikirim. Menunggu persetujuan admin.');
@@ -78,7 +92,6 @@ class PeminjamanController extends Controller
 
     public function show(Booking $peminjaman)
     {
-        // Cek kepemilikan
         if ($peminjaman->user_id !== auth()->id()) {
             abort(403, 'Anda tidak memiliki akses ke peminjaman ini.');
         }
@@ -88,7 +101,6 @@ class PeminjamanController extends Controller
 
     public function batal(Booking $peminjaman)
     {
-        // Cek kepemilikan
         if ($peminjaman->user_id !== auth()->id()) {
             abort(403, 'Anda tidak memiliki akses.');
         }
@@ -98,6 +110,19 @@ class PeminjamanController extends Controller
         }
 
         $peminjaman->update(['status' => 'cancelled']);
+
+        // ✅ NOTIFIKASI KE ADMIN: Peminjaman Dibatalkan
+        UserNotification::sendToAdmins(
+            '❌ Peminjaman Dibatalkan',
+            auth()->user()->name . ' membatalkan peminjaman buku "' . $peminjaman->book->judul . '"',
+            'booking_cancelled',
+            [
+                'booking_id' => $peminjaman->id,
+                'book_id' => $peminjaman->book_id,
+                'icon' => '❌',
+                'url' => route('admin.peminjaman.show', $peminjaman->id)
+            ]
+        );
 
         return redirect()->route('peminjam.peminjaman.index')
             ->with('success', 'Peminjaman berhasil dibatalkan.');

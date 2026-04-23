@@ -1,8 +1,10 @@
 <?php
+// app/Http/Controllers/Peminjam/BukuController.php
 
 namespace App\Http\Controllers\Peminjam;
 
 use App\Models\Book;
+use App\Models\Kategori;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -10,14 +12,15 @@ class BukuController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Book::with('kategori')->where('status', 'available')->where('stok', '>', 0);
+        // ✅ Hanya tampilkan buku yang TIDAK dihapus
+        $query = Book::with('kategori');
         
-        if ($request->has('cari')) {
+        if ($request->has('cari') && $request->cari != '') {
             $cari = $request->cari;
             $query->where(function($q) use ($cari) {
                 $q->where('judul', 'like', "%{$cari}%")
-                ->orWhere('pengarang', 'like', "%{$cari}%")
-                ->orWhere('penerbit', 'like', "%{$cari}%");
+                  ->orWhere('pengarang', 'like', "%{$cari}%")
+                  ->orWhere('penerbit', 'like', "%{$cari}%");
             });
         }
         
@@ -25,13 +28,22 @@ class BukuController extends Controller
             $query->where('kategori_id', $request->kategori);
         }
         
-        $buku = $query->orderBy('judul')->paginate(100);
-        
+        $buku = $query->where('status', 'available')
+            ->where('stok', '>', 0)
+            ->orderBy('judul')
+            ->paginate(12);
+            
         return view('peminjam.buku.index', compact('buku'));
     }
 
     public function show(Book $buku)
     {
+        // ✅ Buku yang sudah dihapus tidak bisa diakses peminjam
+        if ($buku->trashed()) {
+            abort(404);
+        }
+        
+        $buku->load('kategori');
         return view('peminjam.buku.show', compact('buku'));
     }
 }
